@@ -6,6 +6,11 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import os
 import subprocess
+import sys
+
+# Show Python version for debugging
+st.sidebar.write(f"🐍 Python: {sys.version.split()[0]}")
+st.sidebar.write(f"🧠 TensorFlow: {tf.__version__}")
 
 st.set_page_config(
     page_title="Pneumonia Detection",
@@ -25,8 +30,11 @@ def download_and_train():
     if not os.path.exists(data_path):
         with st.spinner("📥 Downloading dataset... This may take 2-3 minutes"):
             os.environ["KAGGLE_API_TOKEN"] = "KGAT_5b435f7615b49cc51191f5ab984c36d2"
-            subprocess.run(["kaggle", "datasets", "download", "-d", "paultimothymooney/chest-xray-pneumonia"], 
-                          capture_output=True)
+            result = subprocess.run(["kaggle", "datasets", "download", "-d", "paultimothymooney/chest-xray-pneumonia"], 
+                          capture_output=True, text=True)
+            if result.returncode != 0:
+                st.error(f"Kaggle download failed: {result.stderr}")
+                return None
             subprocess.run(["unzip", "-q", "chest-xray-pneumonia.zip", "-d", "chest_xray_data"])
     
     # Build model
@@ -83,12 +91,12 @@ def download_and_train():
             shuffle=False
         )
         
-        model.fit(
+        history = model.fit(
             train_generator,
             validation_data=val_generator,
             epochs=5,
             callbacks=[EarlyStopping(patience=2, restore_best_weights=True)],
-            verbose=0
+            verbose=1
         )
     
     return model
@@ -124,7 +132,8 @@ def make_gradcam_heatmap(img_array, model):
             return heatmap
         
         return compute_gradcam(img_array).numpy()
-    except:
+    except Exception as e:
+        st.warning(f"Grad-CAM not available: {str(e)}")
         return None
 
 def overlay_heatmap(img, heatmap, alpha=0.4):
@@ -155,12 +164,18 @@ def main():
         st.info("""
         **First time:** The app will download dataset and train model (5-10 mins).
         **After that:** Instant predictions!
+        
+        **Model:** Custom CNN
+        **Dataset:** Chest X-Ray Pneumonia
         """)
         st.warning("⚠️ **Medical Disclaimer:** Demonstration only")
     
     # Load model
     if 'model' not in st.session_state:
         model = download_and_train()
+        if model is None:
+            st.error("❌ Failed to train model. Check the logs.")
+            return
         st.session_state.model = model
         st.success("✅ Model ready!")
     
