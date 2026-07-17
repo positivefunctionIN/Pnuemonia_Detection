@@ -1,41 +1,4 @@
-# Python
-__pycache__/
-*.py[cod]
-*.so
-.Python
-env/
-venv/
-ENV/
-build/
-dist/
-*.egg-info/
-
-# Data
 *.h5
 *.hdf5
-*.pkl
-*.pth
-*.pt
-*.onnx
-*.pb
 *.tflite
-
-# Notebooks
-.ipynb_checkpoints/
-*.ipynb
-
-# Environment
-.env
-.env.local
-
-# IDE
-.vscode/
-.idea/
-*.swp
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
+chest_xray_data/
